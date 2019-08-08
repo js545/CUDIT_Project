@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind
 
-wd = os.getcwd()
+wd = '/Users/jakeson/Desktop/UNMC/CUDIT_Project/'
 os.chdir(wd)
 
 # Epoch from -800 to 2900 ms
@@ -21,12 +21,32 @@ def subset_orientation(df):
     return df
 
 
+def remove_outliers(df):
+
+    average_per_trial = df.mean(axis=1).tolist()
+    total_average_trial = df.mean(axis=1).mean()
+    stdev_trial = df.mean(axis=1).std()
+
+    removed_trials = []
+
+    for i in range(len(average_per_trial)):
+
+        if average_per_trial[i] > total_average_trial + 3 * stdev_trial:
+            removed_trials.append(i)
+
+    df = df.drop(index=removed_trials)
+
+    return df
+
+
 def load_relative_data():
 
     user_df = pd.read_csv('User_RelPower.csv', header=None)
     nonuser_df = pd.read_csv('Nonuser_RelPower.csv', header=None)
     user_df = subset_orientation(user_df)
     nonuser_df = subset_orientation(nonuser_df)
+    user_df = remove_outliers(user_df)
+    nonuser_df = remove_outliers(nonuser_df)
 
     return user_df, nonuser_df
 
@@ -37,48 +57,35 @@ def load_absolute_data():
     nonuser_df = pd.read_csv('Nonuser_AbsPower.csv', header=None)
     user_df = subset_orientation(user_df)
     nonuser_df = subset_orientation(nonuser_df)
+    user_df = remove_outliers(user_df)
+    nonuser_df = remove_outliers(nonuser_df)
 
     return user_df, nonuser_df
 
 
+def relative_mean_waveform(df):
+
+    df = [x * 100 for x in list(df.mean())]
+
+    return df
+
+
+def absolute_mean_waveform(df):
+
+    df = [x * x for x in list(df.mean())]
+
+    return df
+
+
+########################################################################################################################
 ### Relative Power
 
 user_df, nonuser_df = load_relative_data()
 
-# Remove outlier participants
-
-average_per_trial = user_df.mean(axis=1).tolist()
-total_average_trial = user_df.mean(axis=1).mean()
-stdev_trial = user_df.mean(axis=1).std()
-
-removed_trials = []
-
-for i in range(len(average_per_trial)):
-
-    if average_per_trial[i] > total_average_trial + 3*stdev_trial:
-
-        removed_trials.append(i)
-
-user_df = user_df.drop(index=removed_trials)
-
-average_per_trial = nonuser_df.mean(axis=1).tolist()
-total_average_trial = nonuser_df.mean(axis=1).mean()
-stdev_trial = nonuser_df.mean(axis=1).std()
-
-removed_trials = []
-
-for i in range(len(average_per_trial)):
-
-    if average_per_trial[i] > total_average_trial + 3*stdev_trial:
-
-        removed_trials.append(i)
-
-nonuser_df = nonuser_df.drop(index=removed_trials)
-
 # Calculate mean waveform
 
-user_df_avg = [x*100 for x in list(user_df.mean())]
-nonuser_df_avg = [x*100 for x in list(nonuser_df.mean())]
+user_df_avg = relative_mean_waveform(user_df)
+nonuser_df_avg = relative_mean_waveform(nonuser_df)
 
 # Plot
 
@@ -96,57 +103,15 @@ plt.legend()
 plt.savefig('/Users/jakeson/Desktop/UNMC/CUDIT_Project/relative.png', dpi=600)
 plt.show()
 
-
-
-
-
-
+########################################################################################################################
 ### Absolute Power
 
 user_df, nonuser_df = load_absolute_data()
 
-# Subset one orientation
-
-user_df = user_df.loc[0:user_df.shape[0]/2-1]
-nonuser_df = nonuser_df.loc[0:nonuser_df.shape[0]/2-1]
-
-# Remove outlier participants
-
-average_per_trial = user_df.mean(axis=1).tolist()
-total_average_trial = user_df.mean(axis=1).mean()
-stdev_trial = user_df.mean(axis=1).std()
-
-removed_trials = []
-
-for i in range(len(average_per_trial)):
-
-    if average_per_trial[i] > total_average_trial + 3*stdev_trial:
-
-        removed_trials.append(i)
-
-user_df = user_df.drop(index=removed_trials)
-
-average_per_trial = nonuser_df.mean(axis=1).tolist()
-total_average_trial = nonuser_df.mean(axis=1).mean()
-stdev_trial = nonuser_df.mean(axis=1).std()
-
-removed_trials = []
-
-for i in range(len(average_per_trial)):
-
-    if average_per_trial[i] > total_average_trial + 3*stdev_trial:
-
-        removed_trials.append(i)
-
-nonuser_df = nonuser_df.drop(index=removed_trials)
-
 # Calculate mean waveform
 
-user_df_avg = list(user_df.mean())
-nonuser_df_avg = list(nonuser_df.mean())
-
-user_df_avg = [x*x for x in user_df_avg]
-nonuser_df_avg = [x*x for x in nonuser_df_avg]
+user_df_avg = absolute_mean_waveform(user_df)
+nonuser_df_avg = absolute_mean_waveform(nonuser_df)
 
 # Plot
 
@@ -165,6 +130,7 @@ plt.savefig('/Users/jakeson/Desktop/UNMC/CUDIT_Project/absolute.png', dpi=600)
 plt.show()
 
 
+########################################################################################################################
 ### Relative power somatogating ratios from 0-50 ms
 
 # Determine peaks for first stimulus
@@ -202,16 +168,16 @@ for val in nonuser_df.index:
     second_nonuser_peaks.append(peak_val)
 
 
+########################################################################################################################
 ### Plot individual timeseries
 
-user_df = pd.read_csv('Nonuser_RelPower.csv', header=None)
-user_df = user_df.loc[0:user_df.shape[0]/2-1]
+user_df, nonuser_df = load_relative_data()
 
 plt.figure()
 
-for i in range(user_df.shape[0]):
+for val in user_df.index:
 
-    participant_timeseries = user_df.loc[i]
+    participant_timeseries = user_df.loc[val]
     plt.plot(range(len(participant_timeseries)), participant_timeseries, alpha=.5)
 
 plt.show()
