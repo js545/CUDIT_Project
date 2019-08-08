@@ -13,15 +13,37 @@ os.chdir(wd)
 # Epoch from -800 to 2900 ms
 # Baseline from -700 to -300 ms
 
+
+def subset_orientation(df):
+
+    df = df.loc[0:df.shape[0] / 2 - 1]
+
+    return df
+
+
+def load_relative_data():
+
+    user_df = pd.read_csv('User_RelPower.csv', header=None)
+    nonuser_df = pd.read_csv('Nonuser_RelPower.csv', header=None)
+    user_df = subset_orientation(user_df)
+    nonuser_df = subset_orientation(nonuser_df)
+
+    return user_df, nonuser_df
+
+
+def load_absolute_data():
+
+    user_df = pd.read_csv('User_AbsPower.csv', header=None)
+    nonuser_df = pd.read_csv('Nonuser_AbsPower.csv', header=None)
+    user_df = subset_orientation(user_df)
+    nonuser_df = subset_orientation(nonuser_df)
+
+    return user_df, nonuser_df
+
+
 ### Relative Power
 
-user_df = pd.read_csv('User_RelPower.csv', header=None)
-nonuser_df = pd.read_csv('Nonuser_RelPower.csv', header=None)
-
-# Subset one orientation
-
-user_df = user_df.loc[0:user_df.shape[0]/2-1]
-nonuser_df = nonuser_df.loc[0:nonuser_df.shape[0]/2-1]
+user_df, nonuser_df = load_relative_data()
 
 # Remove outlier participants
 
@@ -77,10 +99,11 @@ plt.show()
 
 
 
+
+
 ### Absolute Power
 
-user_df = pd.read_csv('User_AbsPower.csv', header=None)
-nonuser_df = pd.read_csv('Nonuser_AbsPower.csv', header=None)
+user_df, nonuser_df = load_absolute_data()
 
 # Subset one orientation
 
@@ -151,13 +174,13 @@ first_nonuser_peaks = []
 
 for val in user_df.index:
 
-    individ_timeseries = [x*100 for x in user_df.loc[val].tolist()]
+    individ_timeseries = [x*x for x in user_df.loc[val].tolist()]
     peak_val = np.max(individ_timeseries[32:35])
     first_user_peaks.append(peak_val)
 
 for val in nonuser_df.index:
 
-    individ_timeseries = [x*100 for x in nonuser_df.loc[val].tolist()]
+    individ_timeseries = [x*x for x in nonuser_df.loc[val].tolist()]
     peak_val = np.max(individ_timeseries[32:35])
     first_nonuser_peaks.append(peak_val)
 
@@ -168,15 +191,31 @@ second_nonuser_peaks = []
 
 for val in user_df.index:
 
-    individ_timeseries = [x*100 for x in user_df.loc[val].tolist()]
+    individ_timeseries = [x*x for x in user_df.loc[val].tolist()]
     peak_val = np.max(individ_timeseries[52:55])
     second_user_peaks.append(peak_val)
 
 for val in nonuser_df.index:
 
-    individ_timeseries = [x*100 for x in nonuser_df.loc[val].tolist()]
+    individ_timeseries = [x*x for x in nonuser_df.loc[val].tolist()]
     peak_val = np.max(individ_timeseries[52:55])
     second_nonuser_peaks.append(peak_val)
+
+
+### Plot individual timeseries
+
+user_df = pd.read_csv('Nonuser_RelPower.csv', header=None)
+user_df = user_df.loc[0:user_df.shape[0]/2-1]
+
+plt.figure()
+
+for i in range(user_df.shape[0]):
+
+    participant_timeseries = user_df.loc[i]
+    plt.plot(range(len(participant_timeseries)), participant_timeseries, alpha=.5)
+
+plt.show()
+
 
 
 
